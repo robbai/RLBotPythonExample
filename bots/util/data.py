@@ -29,7 +29,7 @@ from rlbot.utils.structures.game_data_struct import GameTickPacket
 from rlbot.utils.structures.ball_prediction_struct import BallPrediction
 
 
-data_size = (3 + 3 + 1 + 6 + (3 + 3 + 7) * 2 + 3)
+data_size = (3 + 3 + 1 + 6 + (3 + 3 + 3 + 7) * 2 + 3)
 
 
 def format_data(index: int, packet: GameTickPacket, prediction: BallPrediction):
