@@ -1,17 +1,17 @@
 '''
 BALL:
-ball: X, Y, Z (scaled to pitch dimensions)
+ball: (X, Y, Z) / pitch width
 ball velocity normalised: X, Y, Z
-ball velocity magnitude / pitch length
-ball prediction displacement: X, Y, Z (scaled to pitch dimensions, each 0.5 seconds for 3 seconds)
+ball velocity magnitude / pitch width
+ball prediction displacement: (X, Y, Z) / pitch width, each 0.5 seconds for 3 seconds
 
 CARS:
 our car: X, Y, Z (scaled to pitch dimensions)
 our car nose: X, Y, Z
 local ball normalised: X, Y, Z
-our ball distance / pitch length
+our ball distance / pitch width
 our car boost / 100
-car velocity magnitude / pitch length
+car velocity magnitude / pitch width
 car velocity forward component
 has wheel contact
 is super sonic
