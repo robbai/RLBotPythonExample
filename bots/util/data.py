@@ -25,7 +25,7 @@ is round active
 '''
 
 import numpy as np
-from rlbot.utils.structures.game_data_struct import GameTickPacket
+from rlbot.utils.structures.game_data_struct import GameTickPacket, PlayerInfo, GameInfo, BallInfo
 from rlbot.utils.structures.ball_prediction_struct import BallPrediction
 
 
