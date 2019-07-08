@@ -3,7 +3,7 @@ BALL:
 ball: (X, Y, Z) / pitch width
 ball velocity normalised: X, Y, Z
 ball velocity magnitude / pitch width
-ball prediction displacement: (X, Y, Z) / pitch width, each 0.5 seconds for 3 seconds
+ball prediction displacement: (X, Y, Z) / pitch width, each second for 3 seconds
 
 CARS:
 our car: X, Y, Z (scaled to pitch dimensions)
@@ -29,7 +29,7 @@ from rlbot.utils.structures.game_data_struct import GameTickPacket, PlayerInfo, 
 from rlbot.utils.structures.ball_prediction_struct import BallPrediction
 
 
-data_size = (3 + 3 + 1 + 6 + (3 + 3 + 3 + 7) * 2 + 3)
+data_size = (3 + 3 + 1 + (3 * 3) + (3 + 3 + 3 + 7) * 2 + 3)
 
 
 def format_data(index: int, packet: GameTickPacket, prediction: BallPrediction):
