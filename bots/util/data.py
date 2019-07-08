@@ -7,6 +7,7 @@ ball prediction displacement: X, Y, Z (scaled to pitch dimensions, each 0.5 seco
 
 CARS:
 our car: X, Y, Z (scaled to pitch dimensions)
+our car nose: X, Y, Z
 local ball normalised: X, Y, Z
 our ball distance / pitch length
 our car boost / 100
@@ -31,7 +32,7 @@ from rlbot.utils.structures.ball_prediction_struct import BallPrediction
 data_size = (3 + 3 + 1 + 6 + (3 + 3 + 7) * 2 + 3)
 
 
-def format_data(packet: GameTickPacket, prediction: BallPrediction):
+def format_data(index: int, packet: GameTickPacket, prediction: BallPrediction):
     data = np.zeros(shape = data_size) # Blank data
 
 
