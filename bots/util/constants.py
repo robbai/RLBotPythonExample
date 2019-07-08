@@ -1,4 +1,4 @@
-#https://discordapp.com/channels/348658686962696195/446761380654219264/546468104348237854
+# https://discordapp.com/channels/348658686962696195/446761380654219264/546468104348237854
 ball_radius_uu = 92.75
 octane_com_height_uu = 16.5
 gravity_uu_s2 = 650.0
@@ -16,3 +16,6 @@ max_angular_accel_roll_rads_s2 = 38.34
 jump_initial_vel_uu_s = 300.0
 accel_jumping_uu_s2 = 1400.0
 physics_slice_time_s = 1.0/60.0
+pitch_side_uu = 4096.0
+pitch_back_uu = 5120.0
+pitch_ceiling_uu = 2044.0

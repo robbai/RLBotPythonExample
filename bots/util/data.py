@@ -30,6 +30,7 @@ from rlbot.utils.structures.game_data_struct import GameTickPacket, PlayerInfo, 
 from rlbot.utils.structures.ball_prediction_struct import BallPrediction
 
 from ..util.vec import Vec3
+from ..util.constants import *
 
 data_size = (3 + 3 + 1 + (3 * 3) + (3 + 3 + 3 + 7) * 2 + 3)
 
