@@ -10,7 +10,7 @@ our car: X, Y, Z (scaled to pitch dimensions)
 local ball normalised: X, Y, Z
 our ball distance / pitch length
 our car boost / 100
-car velocity magnitude
+car velocity magnitude / pitch length
 car velocity forward component
 has wheel contact
 is super sonic
@@ -25,10 +25,14 @@ is round active
 
 import numpy as np
 from rlbot.utils.structures.game_data_struct import GameTickPacket
+from rlbot.utils.structures.ball_prediction_struct import BallPrediction
 
 
-def format_data(packet: GameTickPacket):
-    data = np.zeros() # Blank data
+data_size = (3 + 3 + 1 + 6 + (3 + 3 + 7) * 2 + 3)
+
+
+def format_data(packet: GameTickPacket, prediction: BallPrediction):
+    data = np.zeros(shape = data_size) # Blank data
 
 
     return data
