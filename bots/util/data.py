@@ -24,16 +24,17 @@ time since last touch, 10th log
 is round active
 '''
 
+
 import numpy as np
 from rlbot.utils.structures.game_data_struct import GameTickPacket, PlayerInfo, GameInfo, BallInfo
 from rlbot.utils.structures.ball_prediction_struct import BallPrediction
 
+from ..util.vec import Vec3
 
 data_size = (3 + 3 + 1 + (3 * 3) + (3 + 3 + 3 + 7) * 2 + 3)
 
 
 def format_data(index: int, packet: GameTickPacket, prediction: BallPrediction):
     data = np.zeros(shape = data_size) # Blank data
-
 
     return data
