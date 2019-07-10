@@ -14,6 +14,7 @@ class Learner(BaseAgent):
 
     def initialize_agent(self):
         self.controller_state = SimpleControllerState()
+        self.last_time = 0
 
         # Teacher
         self.teacher = Teacher(self, self.team, self.index)
@@ -26,12 +27,13 @@ class Learner(BaseAgent):
         #self.tf = tf
 
         # Network
+        regularisation_rate = 0.01
         self.model = tf.keras.Sequential([
-        layers.Dense(data_size, activation = 'relu', input_shape = (data_size,)),
-        layers.Dense(data_size, activation = 'relu'),
-        layers.Dense(label_size, activation = 'sigmoid')])
-        self.model.compile(optimizer = tf.train.AdamOptimizer(0.001),
-                      loss = 'mean_squared_error')
+        layers.Dense(data_size, activation = 'sigmoid', input_shape = (data_size,), kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),
+        layers.Dense(data_size, activation = 'sigmoid', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),
+        layers.Dense(label_size, activation = 'sigmoid', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate))])
+        self.model.compile(optimizer = tf.train.AdamOptimizer(0.01),
+                           loss = 'mse')
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
         teacher_output = self.teacher.get_output(packet)
@@ -40,10 +42,15 @@ class Learner(BaseAgent):
         labels = format_labels(teacher_output).reshape((1, label_size))
 
         output = self.model.predict(data)[0]
-        self.controller_state = from_labels(output)
+        print(labels.tolist(), output.tolist())
 
-        self.train(data, labels)
+        time = packet.game_info.seconds_elapsed
+        #if time - self.last_time > 0.1:
+        if True:
+            self.train(data, labels)
+            self.last_time= time
         
+        self.controller_state = from_labels(output)
         return self.controller_state
 
     def train(self, data, labels):
