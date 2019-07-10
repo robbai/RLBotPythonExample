@@ -16,7 +16,7 @@ class Learner(BaseAgent):
         self.controller_state = SimpleControllerState()
 
         # Teacher
-        self.teacher = Teacher(self)
+        self.teacher = Teacher(self, self.team, self.index)
         self.teacher.renderer = DummyRenderer(self.renderer)
 
         # Tensorflow
