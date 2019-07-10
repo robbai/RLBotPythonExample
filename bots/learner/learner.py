@@ -6,7 +6,6 @@ from rlbot.utils.structures.game_data_struct import GameTickPacket
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from util.collect_data import format_data, format_labels, data_size, label_size, from_labels
-from teacher.teacher import Teacher
 from util.dummy_renderer import DummyRenderer
 
 
@@ -15,8 +14,12 @@ class Learner(BaseAgent):
     def initialize_agent(self):
         self.controller_state = SimpleControllerState()
         self.last_time = 0
+        self.delta_time = None
 
         # Teacher
+        #from teacher.teacher import Teacher
+        sys.path.append(r'C:\Users\wood3\Documents\RLBot\Bots\Atba2')
+        from atba2 import Atba2 as Teacher
         self.teacher = Teacher(self, self.team, self.index)
         self.teacher.initialize_agent()
         self.teacher.renderer = DummyRenderer(self.renderer)
@@ -42,13 +45,13 @@ class Learner(BaseAgent):
         labels = format_labels(teacher_output).reshape((1, label_size))
 
         output = self.model.predict(data)[0]
-        print(labels.tolist(), output.tolist())
+        #print(labels.tolist(), output.tolist())
 
         time = packet.game_info.seconds_elapsed
-        #if time - self.last_time > 0.1:
-        if True:
+        if self.delta_time is None or time - self.last_time > self.delta_time:
+        #if True:
             self.train(data, labels)
-            self.last_time= time
+            self.last_time = time
         
         self.controller_state = from_labels(output)
         return self.controller_state
