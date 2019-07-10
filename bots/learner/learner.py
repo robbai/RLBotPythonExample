@@ -17,9 +17,11 @@ class Learner(BaseAgent):
         self.delta_time = None
 
         # Teacher
-        #from teacher.teacher import Teacher
-        sys.path.append(r'C:\Users\wood3\Documents\RLBot\Bots\Atba2')
-        from atba2 import Atba2 as Teacher
+        try:
+            sys.path.append(r'C:\Users\wood3\Documents\RLBot\Bots\Atba2')
+            from atba2 import Atba2 as Teacher
+        except:
+            from teacher.teacher import Teacher
         self.teacher = Teacher(self, self.team, self.index)
         self.teacher.initialize_agent()
         self.teacher.renderer = DummyRenderer(self.renderer)
