@@ -37,26 +37,30 @@ class Learner(BaseAgent):
 
         # Network
         regularisation_rate = 0.01
-        self.model = tf.keras.Sequential([
-        layers.Dense(data_size, activation = 'sigmoid', input_shape = (data_size,), kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),
-        layers.Dense(data_size, activation = 'sigmoid', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),
+        self.model = tf.keras.Sequential([\
+        layers.Dense(data_size, activation = 'sigmoid', input_shape = (data_size,), kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
+        layers.Dense(data_size, activation = 'sigmoid', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
         layers.Dense(label_size, activation = 'sigmoid', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate))])
-        self.model.compile(optimizer = tf.train.AdamOptimizer(0.01),
+        self.model.compile(optimizer = tf.train.AdamOptimizer(0.01),\
                            loss = 'mse')
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
-        self.reset_teacher_functions()
-        teacher_output = self.teacher.get_output(packet)
-        
+        self.play_on_own = (packet.game_info.seconds_elapsed > 120)
+
         data = format_data(self.index, packet, self.get_ball_prediction_struct()).reshape((1, data_size))
-        labels = format_labels(teacher_output).reshape((1, label_size))
+        labels = None
+
+        if not self.play_on_own:
+            self.reset_teacher_functions()
+            teacher_output = self.teacher.get_output(packet)
+            labels = format_labels(teacher_output).reshape((1, label_size))
 
         output = self.model.predict(data)[0]
         #print(labels.tolist(), output.tolist())
 
         time = packet.game_info.seconds_elapsed
-        if self.delta_time is None or time - self.last_time > self.delta_time:
-        #if True:
+        if (self.delta_time is None or time - self.last_time > self.delta_time)\
+           and not self.play_on_own:
             self.train(data, labels)
             self.last_time = time
         
@@ -64,7 +68,7 @@ class Learner(BaseAgent):
         return self.controller_state
 
     def train(self, data, labels):
-        self.model.fit([data], [labels], epochs = 5)
+        self.model.fit([data], [labels], epochs = 10)
 
     def reset_teacher_functions(self, first_time: bool = False):
         if dummy_render:
