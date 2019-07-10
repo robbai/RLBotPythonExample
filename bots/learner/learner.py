@@ -4,7 +4,7 @@ from rlbot.utils.structures.game_data_struct import GameTickPacket
 from ..utils.collect_data import format_data
 
 
-class PythonExample(BaseAgent):
+class Learner(BaseAgent):
 
     def initialize_agent(self):
         # This runs once before the bot starts up
