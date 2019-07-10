@@ -36,7 +36,15 @@ class Learner(BaseAgent):
         
         data = format_data(self.index, packet, self.get_ball_prediction_struct())
         labels = format_labels(teacher_output)
+
+        output = self.model.predict([data])
+        self.controller_state = from_labels(output)
+
+        self.train(data, labels)
         
         return self.controller_state
+
+    def train(self, data, labels):
+        self.model.fit([data], [labels], epochs = 1)
 
 

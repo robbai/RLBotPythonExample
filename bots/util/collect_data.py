@@ -36,6 +36,7 @@ from rlbot.agents.base_agent import SimpleControllerState
 from vec import Vec3
 from constants import *
 from orientation import Orientation, relative_location
+from util import *
 
 
 data_size = (3 + 3 + 1 + (3 * 3) + (3 + 3 + 3 + 7) * 2 + 3)
@@ -120,6 +121,20 @@ def format_labels(controls: SimpleControllerState):
     return labels
 
 
+def from_labels(labels) -> SimpleControllerState:
+    controls = SimpleControllerState()
+    controls.throttle = clamp11(labels[0])
+    controls.steer = clamp11(labels[1])
+    controls.pitch = clamp11(labels[2])
+    controls.yaw = clamp11(labels[3])
+    controls.roll = clamp11(labels[4])
+    controls.jump = (labels[5] > 0)
+    controls.boost = (labels[6] > 0)
+    controls.handbrake = (labels[7] > 0)
+    controls.use_item = (labels[8] > 0)
+    return controls
+
+    
 def get_enemy_car(index: int, packet: GameTickPacket) -> PlayerInfo:
     ball_position = Vec3(packet.game_ball.physics.location)
     team = (1 - packet.game_cars[index].team)
