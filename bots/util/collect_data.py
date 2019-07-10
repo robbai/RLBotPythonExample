@@ -33,10 +33,10 @@ from rlbot.utils.structures.game_data_struct import GameTickPacket, PlayerInfo, 
 from rlbot.utils.structures.ball_prediction_struct import BallPrediction
 from rlbot.agents.base_agent import SimpleControllerState
 
-from vec import Vec3
-from constants import *
-from orientation import Orientation, relative_location
-from util import *
+from .vec import Vec3
+from .constants import *
+from .orientation import Orientation, relative_location
+from .util import *
 
 
 data_size = (3 + 3 + 1 + (3 * 3) + (3 + 3 + 3 + 7) * 2 + 3)

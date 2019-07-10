@@ -1,9 +1,13 @@
+import os
+import sys
+
 from rlbot.agents.base_agent import BaseAgent, SimpleControllerState
 from rlbot.utils.structures.game_data_struct import GameTickPacket
 
-from ..utils.collect_data import format_data, format_labels, data_size, label_size
-from ..teacher.teacher import Teacher
-from ..utils.dummy_renderer import DummyRenderer
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from util.collect_data import format_data, format_labels, data_size, label_size
+from teacher.teacher import Teacher
+from util.dummy_renderer import DummyRenderer
 
 
 class Learner(BaseAgent):
@@ -40,7 +44,7 @@ class Learner(BaseAgent):
         output = self.model.predict([data])
         self.controller_state = from_labels(output)
 
-        self.train(data, labels)
+        #self.train(data, labels)
         
         return self.controller_state
 

@@ -1,10 +1,13 @@
 import math
+import os
+import sys
 
 from rlbot.agents.base_agent import BaseAgent, SimpleControllerState
 from rlbot.utils.structures.game_data_struct import GameTickPacket
 
-from ..util.orientation import Orientation
-from ..util.vec import Vec3
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from util.orientation import Orientation
+from util.vec import Vec3
 
 
 class Teacher(BaseAgent):
