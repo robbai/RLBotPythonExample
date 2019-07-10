@@ -40,6 +40,7 @@ from orientation import Orientation, relative_location
 
 data_size = (3 + 3 + 1 + (3 * 3) + (3 + 3 + 3 + 7) * 2 + 3)
 car_data_size = 16
+label_size = 9
 
 
 def format_data(index: int, packet: GameTickPacket, prediction: BallPrediction):
@@ -106,7 +107,7 @@ def format_data(index: int, packet: GameTickPacket, prediction: BallPrediction):
 
 
 def format_labels(controls: SimpleControllerState):
-    labels = np.zeros(shape = 9) # Blank labels
+    labels = np.zeros(shape = label_size) # Blank labels
     labels[0] = controls.throttle
     labels[1] = controls.steer
     labels[2] = controls.pitch
