@@ -28,23 +28,21 @@ class Learner(BaseAgent):
         # Network
         self.model = tf.keras.Sequential([
         layers.Dense(data_size, activation = 'relu', input_shape = (data_size,)),
-        #layers.Dense(data_size, activation = 'relu'),
-        layers.Dense(label_size, activation = 'relu')])
+        layers.Dense(data_size, activation = 'relu'),
+        layers.Dense(label_size, activation = 'sigmoid')])
         self.model.compile(optimizer = tf.train.AdamOptimizer(0.001),
-                      loss = 'mse')
+                      loss = 'mean_squared_error')
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
         teacher_output = self.teacher.get_output(packet)
         
         data = format_data(self.index, packet, self.get_ball_prediction_struct()).reshape((1, data_size))
-        #print(data)
-        #return self.controller_state
-        labels = format_labels(teacher_output)
+        labels = format_labels(teacher_output).reshape((1, label_size))
 
-        output = self.model.predict(data)
-        self.controller_state = from_labels(output[0])
+        output = self.model.predict(data)[0]
+        self.controller_state = from_labels(output)
 
-        #self.train(data, labels)
+        self.train(data, labels)
         
         return self.controller_state
 

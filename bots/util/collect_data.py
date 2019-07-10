@@ -105,7 +105,7 @@ def format_data(index: int, packet: GameTickPacket, prediction: BallPrediction):
 
     # Misc
     data[48] = (1 if packet.game_info.is_kickoff_pause else -1)
-    data[49] = log(packet.game_info.seconds_elapsed - ball.latest_touch.time_seconds)
+    data[49] = log(max(0.01, packet.game_info.seconds_elapsed - ball.latest_touch.time_seconds))
     data[50] = (1 if packet.game_info.is_round_active else -1)
     
     return data
