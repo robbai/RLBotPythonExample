@@ -18,9 +18,10 @@ class Learner(BaseAgent):
 
         # Teacher
         try:
-            sys.path.append(r'C:\Users\wood3\Documents\RLBot\Bots\Atba2')
-            from atba2 import Atba2 as Teacher
-        except:
+            sys.path.append(r'C:\Users\wood3\Documents\RLBot\Bots\rashBot')
+            from Agent import RashBot as Teacher
+        except Exception as e:
+            print(e)
             from teacher.teacher import Teacher
         self.teacher = Teacher(self, self.team, self.index)
         self.teacher.initialize_agent()
