@@ -10,7 +10,10 @@ class Learner(BaseAgent):
 
     def initialize_agent(self):
         self.controller_state = SimpleControllerState()
+
+        # Teacher
         self.teacher = Teacher(self)
+        self.teacher.renderer = DummyRenderer(self.renderer)
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
         data = format_data(self.index, packet, self.get_ball_prediction_struct())
