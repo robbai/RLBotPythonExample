@@ -41,7 +41,7 @@ class Teacher(BaseAgent):
         self.controller_state.throttle = 1.0
         self.controller_state.steer = turn
 
-        draw_debug(self.renderer, my_car, packet.game_ball, action_display)
+        #draw_debug(self.renderer, my_car, packet.game_ball, action_display)
 
         return self.controller_state
 

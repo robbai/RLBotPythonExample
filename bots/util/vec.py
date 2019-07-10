@@ -74,7 +74,12 @@ class Vec3:
 
     def normalized(self):
         """Returns a vector with the same direction but a length of one."""
-        return self / self.length()
+        length = self.length()
+        if length == 0: return Vec3(self)
+        return self / length
+
+    def normalised(self):
+        return self.normalized()
 
     def rescale(self, new_len: float) -> 'Vec3':
         """Returns a vector with the same direction but a different length."""

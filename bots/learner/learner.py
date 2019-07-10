@@ -17,31 +17,30 @@ class Learner(BaseAgent):
 
         # Teacher
         self.teacher = Teacher(self, self.team, self.index)
+        self.teacher.initialize_agent()
         self.teacher.renderer = DummyRenderer(self.renderer)
 
         # Tensorflow
         import tensorflow as tf
-        from tensorflow import keras
+        from tensorflow.keras import layers
         #self.tf = tf
-        #self.keras = keras
 
         # Network
-        self.model = keras.Sequential([
-            keras.layers.Flatten(input_shape = data_size),
-            keras.layers.Dense(data_size, activation = tf.nn.relu),
-            keras.layers.Dense(label_size, activation = tf.nn.relu)
-        ])
-        self.model.compile(optimizer='adam',
-                      loss='sparse_categorical_crossentropy',
-                      metrics=['accuracy'])
+        self.model = tf.keras.Sequential([
+        layers.Dense(data_size, activation = 'relu', input_shape = (data_size,)),
+        layers.Dense(data_size, activation = 'relu'),
+        layers.Dense(label_size, activation = 'relu')])
+        self.model.compile(optimizer = tf.train.AdamOptimizer(0.001),
+                      loss = 'categorical_crossentropy')
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
         teacher_output = self.teacher.get_output(packet)
         
-        data = format_data(self.index, packet, self.get_ball_prediction_struct())
-        labels = format_labels(teacher_output)
+        data = format_data(self.index, packet, self.get_ball_prediction_struct()).tolist()
+        #print(data)
+        labels = format_labels(teacher_output).tolist()
 
-        output = self.model.predict([data])
+        output = self.model.predict(data)
         self.controller_state = from_labels(output)
 
         #self.train(data, labels)

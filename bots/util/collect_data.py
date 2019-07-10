@@ -29,7 +29,7 @@ is round active
 from math import log10 as log
 
 import numpy as np
-from rlbot.utils.structures.game_data_struct import GameTickPacket, PlayerInfo, GameInfo, BallInfo
+from rlbot.utils.structures.game_data_struct import GameTickPacket, PlayerInfo, GameInfo, BallInfo, rotate_game_tick_packet_boost_omitted as flip_packet
 from rlbot.utils.structures.ball_prediction_struct import BallPrediction
 from rlbot.agents.base_agent import SimpleControllerState
 
@@ -47,11 +47,14 @@ label_size = 9
 def format_data(index: int, packet: GameTickPacket, prediction: BallPrediction):
     data = np.zeros(shape = data_size) # Blank data
 
+    flip = (packet.game_cars[index].team == 1) 
+    if flip: packet = flip_packet(packet)
+
     # Ball
     ball: BallData = packet.game_ball
     ball_position = Vec3(ball.physics.location) / pitch_side_uu
     ball_velocity = Vec3(ball.physics.velocity)
-    ball_velocity_magnitude = ball_velocity.magnitude / pitch_side_uu
+    ball_velocity_magnitude = ball_velocity.length() / pitch_side_uu
     ball_velocity = ball_velocity.normalised()
     data[0] = ball_position.x
     data[1] = ball_position.y
@@ -65,7 +68,8 @@ def format_data(index: int, packet: GameTickPacket, prediction: BallPrediction):
     ball_position = Vec3(ball.physics.location) # Rescale
     for i in range(3):
         frame = (i + 1) * 60
-        predicted_location = prediction.slices[frame].physics.location
+        predicted_location = Vec3(prediction.slices[frame].physics.location)
+        if flip: predicted_location = Vec3(-predicted_location.x, -predicted_location.y, predicted_location.z)
         displacement = (predicted_location - ball_position) / pitch_side_uu
         data[7 + i * 3] = displacement.x
         data[8 + i * 3] = displacement.y
@@ -90,9 +94,9 @@ def format_data(index: int, packet: GameTickPacket, prediction: BallPrediction):
         data[22 + i * car_data_size] = local.x
         data[23 + i * car_data_size] = local.y
         data[24 + i * car_data_size] = local.z
-        data[25 + i * car_data_size] = car_position.distance(ball_position) / pitch_side_uu
+        data[25 + i * car_data_size] = car_position.dist(ball_position) / pitch_side_uu
         data[26 + i * car_data_size] = car.boost / 100
-        car_velocity_magnitude = car.physics.velocity.magnitude
+        car_velocity_magnitude = Vec3(car.physics.velocity).length()
         data[27 + i * car_data_size] = car_velocity_magnitude / pitch_side_uu
         data[28 + i * car_data_size] = car_direction.dot(car.physics.velocity) / car_velocity_magnitude
         data[29 + i * car_data_size] = (1 if car.is_super_sonic else -1)
@@ -145,7 +149,7 @@ def get_enemy_car(index: int, packet: GameTickPacket) -> PlayerInfo:
     for index, car in enumerate(packet.game_cars[:packet.num_cars]):
         if not car or car.team != team: continue
         car_position = Vec3(car.physics.location)
-        distance = car_position.distance(ball_position)
+        distance = car_position.dist(ball_position)
 
         if not closest_car or distance < min_distance:
             closest_car = car
