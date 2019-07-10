@@ -37,7 +37,7 @@ from rlbot.agents.base_agent import SimpleControllerState
 from .vec import Vec3
 from .constants import *
 from .orientation import Orientation, relative_location
-from .util import *
+from .utility import *
 
 
 data_size = (3 + 3 + 1 + (3 * 3) + (3 + 3 + 3 + 3 + 7) * 2 + 3)
@@ -126,7 +126,7 @@ def format_labels(controls: SimpleControllerState):
     labels[5] = (1 if controls.jump else 0)
     labels[6] = (1 if controls.boost else 0)
     labels[7] = (1 if controls.handbrake else 0)
-    labels[8] = (1 if controls.use_item else 0)
+    labels[8] = (1 if hasattr(controls, 'use_item') and controls.use_item else 0)
     return labels
 
 

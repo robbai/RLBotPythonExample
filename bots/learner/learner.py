@@ -5,8 +5,8 @@ from rlbot.agents.base_agent import BaseAgent, SimpleControllerState
 from rlbot.utils.structures.game_data_struct import GameTickPacket
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from util.collect_data import format_data, format_labels, data_size, label_size, from_labels
-from util.dummy_renderer import DummyRenderer
+from utility.collect_data import format_data, format_labels, data_size, label_size, from_labels
+from utility.dummy_renderer import DummyRenderer
 
 
 dummy_render = False
@@ -21,13 +21,13 @@ class Learner(BaseAgent):
 
         # Teacher
         try:
-            sys.path.append(r'C:\Users\wood3\Documents\RLBot\Bots\rashBot')
-            from Agent import RashBot as Teacher
+            sys.path.append(r'C:\Users\wood3\Documents\RLBot\Bots\Stick')
+            from Agent import Stick as Teacher
         except Exception as e:
             print(e)
             from teacher.teacher import Teacher
         self.teacher = Teacher(self, self.team, self.index)
-        self.reset_teacher_functions()
+        self.reset_teacher_functions(first_time = True)
         self.teacher.initialize_agent()
         
         # Tensorflow
@@ -64,10 +64,15 @@ class Learner(BaseAgent):
         return self.controller_state
 
     def train(self, data, labels):
-        self.model.fit([data], [labels], epochs = 1)
+        self.model.fit([data], [labels], epochs = 5)
 
-    def reset_teacher_functions(self):
+    def reset_teacher_functions(self, first_time: bool = False):
         if dummy_render:
             self.teacher.renderer = DummyRenderer(self.renderer)
         else:
             self.teacher.renderer = self.renderer
+
+        if first_time:
+            self.teacher.get_field_info = self.get_field_info
+            self.teacher.get_ball_prediction_struct = self.get_ball_prediction_struct
+            self.teacher.send_quick_chat = self.send_quick_chat
