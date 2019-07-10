@@ -8,7 +8,7 @@ from rlbot.utils.structures.game_data_struct import GameTickPacket
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utility.orientation import Orientation
 from utility.vec import Vec3
-from utility.util import *
+from utility.utility import *
 
 
 class Teacher(BaseAgent):
@@ -30,8 +30,8 @@ class Teacher(BaseAgent):
         car_direction = car_orientation.forward
 
         steer_correction_radians = find_correction(car_direction, car_to_ball)
-        #turn = clamp11(steer_correction_radians * -3)
-        turn = -math.copysign(1, steer_correction_radians)
+        turn = clamp11(steer_correction_radians * -3)
+        #turn = -math.copysign(1, steer_correction_radians)
 
         if steer_correction_radians > 0:
             # Positive radians in the unit circle is a turn to the left.

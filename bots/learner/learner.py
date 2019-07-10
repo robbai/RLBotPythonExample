@@ -17,15 +17,22 @@ class Learner(BaseAgent):
     def initialize_agent(self):
         self.controller_state = SimpleControllerState()
         self.last_time = 0
-        self.delta_time = None
+
+        # Variables
+        self.delta_time = 0.1
+        self.play_on_own = False
+
+        # Data and labels
+        self.gathered_data = []
+        self.gathered_labels = []
 
         # Teacher
         try:
-            sys.path.append(r'C:\Users\wood3\Documents\RLBot\Bots\Stick')
-            from Agent import Stick as Teacher
+            sys.path.append(r'C:/Users/wood3/Documents/RLBot/Bots/Atba2')
+            from atba2 import Atba2 as Teacher
         except Exception as e:
             print(e)
-            from teacher.teacher import Teacher
+            from teacher import Teacher
         self.teacher = Teacher(self, self.team, self.index)
         self.reset_teacher_functions(first_time = True)
         self.teacher.initialize_agent()
@@ -36,39 +43,44 @@ class Learner(BaseAgent):
         #self.tf = tf
 
         # Network
-        regularisation_rate = 0.01
+        regularisation_rate = 10
         self.model = tf.keras.Sequential([\
         layers.Dense(data_size, activation = 'sigmoid', input_shape = (data_size,), kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
         layers.Dense(data_size, activation = 'sigmoid', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
         layers.Dense(label_size, activation = 'sigmoid', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate))])
-        self.model.compile(optimizer = tf.train.AdamOptimizer(0.01),\
+        self.model.compile(optimizer = tf.train.AdamOptimizer(0.005),\
                            loss = 'mse')
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
-        self.play_on_own = (packet.game_info.seconds_elapsed > 120)
-
-        data = format_data(self.index, packet, self.get_ball_prediction_struct()).reshape((1, data_size))
+        data = format_data(self.index, packet, self.get_ball_prediction_struct())
         labels = None
 
         if not self.play_on_own:
             self.reset_teacher_functions()
             teacher_output = self.teacher.get_output(packet)
-            labels = format_labels(teacher_output).reshape((1, label_size))
+            labels = format_labels(teacher_output)
 
-        output = self.model.predict(data)[0]
-        #print(labels.tolist(), output.tolist())
+            self.gathered_data.append(data)
+            self.gathered_labels.append(labels)
+
+        #print(len(self.gathered_data))
+
+        output = self.model.predict(data.reshape((1, data_size)))[0]
 
         time = packet.game_info.seconds_elapsed
         if (self.delta_time is None or time - self.last_time > self.delta_time)\
            and not self.play_on_own:
-            self.train(data, labels)
+            self.train(self.gathered_data, self.gathered_labels)
             self.last_time = time
+
+            self.gathered_data.clear()
+            self.gathered_labels.clear()
         
         self.controller_state = from_labels(output)
         return self.controller_state
 
     def train(self, data, labels):
-        self.model.fit([data], [labels], epochs = 10)
+        self.model.fit([data], [labels], epochs = 1)
 
     def reset_teacher_functions(self, first_time: bool = False):
         if dummy_render:
