@@ -31,6 +31,7 @@ from math import log10 as log
 import numpy as np
 from rlbot.utils.structures.game_data_struct import GameTickPacket, PlayerInfo, GameInfo, BallInfo
 from rlbot.utils.structures.ball_prediction_struct import BallPrediction
+from rlbot.agents.base_agent import SimpleControllerState
 
 from vec import Vec3
 from constants import *
@@ -102,6 +103,20 @@ def format_data(index: int, packet: GameTickPacket, prediction: BallPrediction):
     data[50] = (1 if packet.game_info.is_round_active else -1)
     
     return data
+
+
+def format_labels(controls: SimpleControllerState):
+    labels = np.zeros(shape = 9) # Blank labels
+    labels[0] = controls.throttle
+    labels[1] = controls.steer
+    labels[2] = controls.pitch
+    labels[3] = controls.yaw
+    labels[4] = controls.roll
+    labels[5] = (1 if controls.jump else -1)
+    labels[6] = (1 if controls.boost else -1)
+    labels[7] = (1 if controls.handbrake else -1)
+    labels[8] = (1 if controls.use_item else -1)
+    return labels
 
 
 def get_enemy_car(index: int, packet: GameTickPacket) -> PlayerInfo:
