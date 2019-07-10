@@ -9,6 +9,9 @@ from util.collect_data import format_data, format_labels, data_size, label_size,
 from util.dummy_renderer import DummyRenderer
 
 
+dummy_render = False
+
+
 class Learner(BaseAgent):
 
     def initialize_agent(self):
@@ -24,9 +27,9 @@ class Learner(BaseAgent):
             print(e)
             from teacher.teacher import Teacher
         self.teacher = Teacher(self, self.team, self.index)
+        self.reset_teacher_functions()
         self.teacher.initialize_agent()
-        self.teacher.renderer = DummyRenderer(self.renderer)
-
+        
         # Tensorflow
         import tensorflow as tf
         from tensorflow.keras import layers
@@ -42,6 +45,7 @@ class Learner(BaseAgent):
                            loss = 'mse')
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
+        self.reset_teacher_functions()
         teacher_output = self.teacher.get_output(packet)
         
         data = format_data(self.index, packet, self.get_ball_prediction_struct()).reshape((1, data_size))
@@ -62,4 +66,8 @@ class Learner(BaseAgent):
     def train(self, data, labels):
         self.model.fit([data], [labels], epochs = 1)
 
-
+    def reset_teacher_functions(self):
+        if dummy_render:
+            self.teacher.renderer = DummyRenderer(self.renderer)
+        else:
+            self.teacher.renderer = self.renderer

@@ -46,3 +46,6 @@ class DummyRenderer(RenderingManager):
 
     def end_rendering(self):
         pass
+
+    def clear_all_touched_render_groups(self):
+        pass
