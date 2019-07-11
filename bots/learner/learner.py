@@ -1,6 +1,8 @@
 import os
 import sys
+from random import shuffle
 
+import numpy as np
 from rlbot.agents.base_agent import BaseAgent, SimpleControllerState
 from rlbot.utils.structures.game_data_struct import GameTickPacket
 
@@ -19,7 +21,8 @@ class Learner(BaseAgent):
         self.last_time = 0
 
         # Variables
-        self.delta_time = 0.1
+        self.epochs = 1000
+        self.step_size = 250
         self.play_on_own = False
 
         # Data and labels
@@ -43,15 +46,18 @@ class Learner(BaseAgent):
         #self.tf = tf
 
         # Network
-        regularisation_rate = 10
+        regularisation_rate = 0.1
         self.model = tf.keras.Sequential([\
-        layers.Dense(data_size, activation = 'sigmoid', input_shape = (data_size,), kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
-        layers.Dense(data_size, activation = 'sigmoid', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
+        layers.Dense(data_size / 2, activation = 'sigmoid', input_shape = (data_size,), kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
+        layers.Dense(data_size / 2, activation = 'sigmoid', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
         layers.Dense(label_size, activation = 'sigmoid', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate))])
-        self.model.compile(optimizer = tf.train.AdamOptimizer(0.005),\
+        self.model.compile(optimizer = tf.train.AdamOptimizer(0.01),\
                            loss = 'mse')
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
+        if not packet.game_info.is_round_active or packet.game_cars[self.index].is_demolished:
+            return self.controller_state 
+        
         data = format_data(self.index, packet, self.get_ball_prediction_struct())
         labels = None
 
@@ -67,20 +73,22 @@ class Learner(BaseAgent):
 
         output = self.model.predict(data.reshape((1, data_size)))[0]
 
-        time = packet.game_info.seconds_elapsed
-        if (self.delta_time is None or time - self.last_time > self.delta_time)\
+        if (self.step_size is None or len(self.gathered_data) % self.step_size == 0)\
            and not self.play_on_own:
-            self.train(self.gathered_data, self.gathered_labels)
-            self.last_time = time
+            c = list(zip(self.gathered_data, self.gathered_labels))
+            shuffle(c)
+            data, labels = zip(*c)
+            
+            self.train(data[:self.step_size], labels[:self.step_size])
 
-            self.gathered_data.clear()
-            self.gathered_labels.clear()
+            '''self.gathered_data.clear()
+            self.gathered_labels.clear()'''
         
         self.controller_state = from_labels(output)
         return self.controller_state
 
     def train(self, data, labels):
-        self.model.fit([data], [labels], epochs = 1)
+        self.model.fit([data], [labels], epochs = self.epochs)
 
     def reset_teacher_functions(self, first_time: bool = False):
         if dummy_render:
