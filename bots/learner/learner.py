@@ -21,9 +21,10 @@ class Learner(BaseAgent):
         self.last_time = 0
 
         # Variables
-        self.epochs = 1000
-        self.step_size = 250
+        self.epochs = 20
+        self.step_size = 100
         self.play_on_own = False
+        self.use_recent_data = True
 
         # Data and labels
         self.gathered_data = []
@@ -46,13 +47,13 @@ class Learner(BaseAgent):
         #self.tf = tf
 
         # Network
-        regularisation_rate = 0.1
+        regularisation_rate = 0.01
         self.model = tf.keras.Sequential([\
-        layers.Dense(data_size / 2, activation = 'sigmoid', input_shape = (data_size,), kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
-        layers.Dense(data_size / 2, activation = 'sigmoid', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
-        layers.Dense(label_size, activation = 'sigmoid', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate))])
-        self.model.compile(optimizer = tf.train.AdamOptimizer(0.01),\
-                           loss = 'mse')
+        layers.Dense(data_size, activation = 'linear', input_shape = (data_size,), kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
+        layers.Dense(data_size, activation = 'linear', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
+        layers.Dense(label_size, activation = 'linear', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate))])
+        self.model.compile(optimizer = tf.train.AdamOptimizer(10),\
+                           loss = 'mae')
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
         if not packet.game_info.is_round_active or packet.game_cars[self.index].is_demolished:
@@ -81,8 +82,9 @@ class Learner(BaseAgent):
             
             self.train(data[:self.step_size], labels[:self.step_size])
 
-            '''self.gathered_data.clear()
-            self.gathered_labels.clear()'''
+            if self.use_recent_data:
+                self.gathered_data.clear()
+                self.gathered_labels.clear()
         
         self.controller_state = from_labels(output)
         return self.controller_state
