@@ -11,7 +11,7 @@ from utility.collect_data import format_data, format_labels, data_size, label_si
 from utility.dummy_renderer import DummyRenderer
 
 
-dummy_render = True
+dummy_render = False
 
 
 class Learner(BaseAgent):
@@ -21,9 +21,9 @@ class Learner(BaseAgent):
         self.last_time = 0
 
         # Variables
-        self.epochs = 25
-        self.step_size = 100
-        self.max_data_size = 300
+        self.epochs = 40
+        self.steps_used = 0.35
+        self.training_steps = 200
         self.play_on_own = False
 
         # Data and labels
@@ -32,10 +32,10 @@ class Learner(BaseAgent):
 
         # Teacher
         try:
-            '''sys.path.append(r'C:/Users/wood3/Documents/RLBot/Bots/Atba2')
-            from atba2 import Atba2 as Teacher'''
-            sys.path.append(r'C:\Users\wood3\Documents\RLBot\Bots\rashBot')
-            from Agent import RashBot as Teacher
+            sys.path.append(r'C:/Users/wood3/Documents/RLBot/Bots/Dweller')
+            from dweller import Dweller as Teacher
+            '''sys.path.append(r'C:/Users/wood3/Documents/RLBot/Bots/Skybot')
+            from SkyBot import SkyBot as Teacher'''
         except Exception as e:
             print(e)
             from teacher import Teacher
@@ -49,12 +49,12 @@ class Learner(BaseAgent):
         #self.tf = tf
 
         # Network
-        regularisation_rate = 0.000001
+        regularisation_rate = 0.0000001
         self.model = tf.keras.Sequential([\
         layers.Dense(data_size, activation = 'linear', input_shape = (data_size,), kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
         layers.Dense(data_size, activation = 'linear', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
         layers.Dense(label_size, activation = 'tanh', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate))])
-        self.model.compile(optimizer = tf.train.AdamOptimizer(0.001),\
+        self.model.compile(optimizer = tf.train.AdamOptimizer(0.00015),\
                            loss = 'mse')
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
@@ -81,7 +81,7 @@ class Learner(BaseAgent):
         # Train
         print(len(self.gathered_data))
         self.renderer.begin_rendering('Status')
-        if (self.step_size is None or len(self.gathered_data) >= self.max_data_size)\
+        if len(self.gathered_data) >= self.training_steps\
            and not self.play_on_own:
             self.renderer.draw_string_2d(10, 10, 2, 2, 'Training', self.renderer.blue())
             self.renderer.end_rendering()
@@ -90,7 +90,8 @@ class Learner(BaseAgent):
             shuffle(c)
             data, labels = zip(*c)
 
-            self.train(data[:self.step_size], labels[:self.step_size])
+            steps = int(self.training_steps * self.steps_used)
+            self.train(data[:steps], labels[:steps])
 
             self.gathered_data.clear()
             self.gathered_labels.clear()
