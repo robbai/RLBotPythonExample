@@ -11,7 +11,7 @@ from utility.collect_data import format_data, format_labels, data_size, label_si
 from utility.dummy_renderer import DummyRenderer
 
 
-dummy_render = False
+dummy_render = True
 
 
 class Learner(BaseAgent):
@@ -21,10 +21,10 @@ class Learner(BaseAgent):
         self.last_time = 0
 
         # Variables
-        self.epochs = 1
-        self.step_size = 1
+        self.epochs = 25
+        self.step_size = 100
+        self.max_data_size = 300
         self.play_on_own = False
-        self.max_data_size = 1
 
         # Data and labels
         self.gathered_data = []
@@ -49,7 +49,7 @@ class Learner(BaseAgent):
         #self.tf = tf
 
         # Network
-        regularisation_rate = 0.00001
+        regularisation_rate = 0.000001
         self.model = tf.keras.Sequential([\
         layers.Dense(data_size, activation = 'linear', input_shape = (data_size,), kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
         layers.Dense(data_size, activation = 'linear', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
@@ -76,21 +76,27 @@ class Learner(BaseAgent):
 
         # Get our own predicted output
         output = self.model.predict(data.reshape((1, data_size)))[0]
-        print(labels.tolist(), output.tolist())
+        #print(labels.tolist(), output.tolist())
 
         # Train
-        if (self.step_size is None or len(self.gathered_data) % self.step_size == 0)\
+        print(len(self.gathered_data))
+        self.renderer.begin_rendering('Status')
+        if (self.step_size is None or len(self.gathered_data) >= self.max_data_size)\
            and not self.play_on_own:
+            self.renderer.draw_string_2d(10, 10, 2, 2, 'Training', self.renderer.blue())
+            self.renderer.end_rendering()
+            
             c = list(zip(self.gathered_data, self.gathered_labels))
             shuffle(c)
             data, labels = zip(*c)
-            
+
             self.train(data[:self.step_size], labels[:self.step_size])
 
-            if self.max_data_size and len(self.gathered_data) >= self.max_data_size:
-                for i in range(1 + len(self.gathered_data) - self.max_data_size):
-                    del self.gathered_data[0]
-                    del self.gathered_labels[0]
+            self.gathered_data.clear()
+            self.gathered_labels.clear()
+        else:
+            self.renderer.draw_string_2d(10, 10, 2, 2, 'Playing', self.renderer.white())
+            self.renderer.end_rendering()
         
         self.controller_state = from_labels(output)
         return self.controller_state
