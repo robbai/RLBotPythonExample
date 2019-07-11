@@ -22,9 +22,9 @@ class Learner(BaseAgent):
 
         # Variables
         self.epochs = 1
-        self.step_size = 250
+        self.step_size = 1
         self.play_on_own = False
-        self.max_data_size = 1000
+        self.max_data_size = 1
 
         # Data and labels
         self.gathered_data = []
@@ -49,13 +49,13 @@ class Learner(BaseAgent):
         #self.tf = tf
 
         # Network
-        regularisation_rate = 0.0001
+        regularisation_rate = 0.00001
         self.model = tf.keras.Sequential([\
-        layers.Dense(data_size / 2, activation = 'sigmoid', input_shape = (data_size,), kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
-        layers.Dense(data_size / 2, activation = 'sigmoid', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
-        layers.Dense(label_size, activation = 'sigmoid', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate))])
-        self.model.compile(optimizer = tf.train.AdamOptimizer(0.01),\
-                           loss = 'categorical_crossentropy')
+        layers.Dense(data_size, activation = 'linear', input_shape = (data_size,), kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
+        layers.Dense(data_size, activation = 'linear', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
+        layers.Dense(label_size, activation = 'tanh', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate))])
+        self.model.compile(optimizer = tf.train.AdamOptimizer(0.001),\
+                           loss = 'mse')
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
         car = packet.game_cars[self.index]
@@ -87,8 +87,8 @@ class Learner(BaseAgent):
             
             self.train(data[:self.step_size], labels[:self.step_size])
 
-            if self.max_data_size and len(self.gathered_data) > self.max_data_size:
-                for i in range(len(self.gathered_data) - self.max_data_size):
+            if self.max_data_size and len(self.gathered_data) >= self.max_data_size:
+                for i in range(1 + len(self.gathered_data) - self.max_data_size):
                     del self.gathered_data[0]
                     del self.gathered_labels[0]
         

@@ -118,11 +118,11 @@ def format_data(index: int, packet: GameTickPacket, prediction: BallPrediction):
 
 def format_labels(controls: SimpleControllerState, car: PlayerInfo):
     labels = np.zeros(shape = label_size) # Blank labels
-    labels[0] = (1 if controls.boost and car.boost >= 1 else transform_clamp(controls.throttle, True))
-    labels[1] = transform_clamp(controls.steer, True)
-    labels[2] = (0 if car.has_wheel_contact else transform_clamp(controls.pitch, True))
-    labels[3] = (0 if car.has_wheel_contact else transform_clamp(controls.yaw, True))
-    labels[4] = (0 if car.has_wheel_contact else transform_clamp(controls.roll, True))
+    labels[0] = (1 if controls.boost and car.boost >= 1 else clamp11(controls.throttle))
+    labels[1] = clamp11(controls.steer)
+    labels[2] = (0 if car.has_wheel_contact else clamp11(controls.pitch))
+    labels[3] = (0 if car.has_wheel_contact else clamp11(controls.yaw))
+    labels[4] = (0 if car.has_wheel_contact else clamp11(controls.roll))
     labels[5] = (1 if controls.jump else 0)
     labels[6] = (1 if controls.boost else 0)
     labels[7] = (1 if controls.handbrake else 0)
@@ -132,11 +132,11 @@ def format_labels(controls: SimpleControllerState, car: PlayerInfo):
 
 def from_labels(labels) -> SimpleControllerState:
     controls = SimpleControllerState()
-    controls.throttle = transform_clamp(labels[0], False)
-    controls.steer = transform_clamp(labels[1], False)
-    controls.pitch = transform_clamp(labels[2], False)
-    controls.yaw = transform_clamp(labels[3], False)
-    controls.roll = transform_clamp(labels[4], False)
+    controls.throttle = clamp11(labels[0])
+    controls.steer = clamp11(labels[1])
+    controls.pitch = clamp11(labels[2])
+    controls.yaw = clamp11(labels[3])
+    controls.roll = clamp11(labels[4])
     controls.jump = (labels[5] > 0.5)
     controls.boost = (labels[6] > 0.5)
     controls.handbrake = (labels[7] > 0.5)
