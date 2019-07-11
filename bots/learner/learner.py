@@ -56,7 +56,8 @@ class Learner(BaseAgent):
                            loss = 'mae')
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
-        if not packet.game_info.is_round_active or packet.game_cars[self.index].is_demolished:
+        car = packet.game_cars[self.index]
+        if not packet.game_info.is_round_active or car.is_demolished:
             return self.controller_state 
         
         data = format_data(self.index, packet, self.get_ball_prediction_struct())
@@ -65,7 +66,7 @@ class Learner(BaseAgent):
         if not self.play_on_own:
             self.reset_teacher_functions()
             teacher_output = self.teacher.get_output(packet)
-            labels = format_labels(teacher_output)
+            labels = format_labels(teacher_output, car.has_wheel_contact)
 
             self.gathered_data.append(data)
             self.gathered_labels.append(labels)
