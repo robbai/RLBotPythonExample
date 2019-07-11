@@ -132,11 +132,11 @@ def format_labels(controls: SimpleControllerState, car: PlayerInfo):
 
 def from_labels(labels) -> SimpleControllerState:
     controls = SimpleControllerState()
-    controls.throttle = clamp11(transform_clamp(labels[0], False))
-    controls.steer = clamp11(transform_clamp(labels[1], False))
-    controls.pitch = clamp11(transform_clamp(labels[2], False))
-    controls.yaw = clamp11(transform_clamp(labels[3], False))
-    controls.roll = clamp11(transform_clamp(labels[4], False))
+    controls.throttle = transform_clamp(labels[0], False)
+    controls.steer = transform_clamp(labels[1], False)
+    controls.pitch = transform_clamp(labels[2], False)
+    controls.yaw = transform_clamp(labels[3], False)
+    controls.roll = transform_clamp(labels[4], False)
     controls.jump = (labels[5] > 0.5)
     controls.boost = (labels[6] > 0.5)
     controls.handbrake = (labels[7] > 0.5)
