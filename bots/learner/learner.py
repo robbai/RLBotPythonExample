@@ -21,10 +21,10 @@ class Learner(BaseAgent):
         self.last_time = 0
 
         # Variables
-        self.epochs = 20
-        self.step_size = 100
+        self.epochs = 5
+        self.step_size = 30
         self.play_on_own = False
-        self.use_recent_data = True
+        self.max_data_size = 500
 
         # Data and labels
         self.gathered_data = []
@@ -47,13 +47,13 @@ class Learner(BaseAgent):
         #self.tf = tf
 
         # Network
-        regularisation_rate = 0.01
+        regularisation_rate = 0.001
         self.model = tf.keras.Sequential([\
-        layers.Dense(data_size, activation = 'linear', input_shape = (data_size,), kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
-        layers.Dense(data_size, activation = 'linear', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
+        layers.Dense(data_size, activation = 'tanh', input_shape = (data_size,), kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
+        layers.Dense(data_size, activation = 'tanh', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
         layers.Dense(label_size, activation = 'linear', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate))])
-        self.model.compile(optimizer = tf.train.AdamOptimizer(10),\
-                           loss = 'mae')
+        self.model.compile(optimizer = tf.train.AdamOptimizer(0.01),\
+                           loss = 'mse')
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
         car = packet.game_cars[self.index]
@@ -63,6 +63,7 @@ class Learner(BaseAgent):
         data = format_data(self.index, packet, self.get_ball_prediction_struct())
         labels = None
 
+        # Get the labels
         if not self.play_on_own:
             self.reset_teacher_functions()
             teacher_output = self.teacher.get_output(packet)
@@ -71,10 +72,10 @@ class Learner(BaseAgent):
             self.gathered_data.append(data)
             self.gathered_labels.append(labels)
 
-        #print(len(self.gathered_data))
-
+        # Get our own predicted output
         output = self.model.predict(data.reshape((1, data_size)))[0]
 
+        # Train
         if (self.step_size is None or len(self.gathered_data) % self.step_size == 0)\
            and not self.play_on_own:
             c = list(zip(self.gathered_data, self.gathered_labels))
@@ -83,9 +84,10 @@ class Learner(BaseAgent):
             
             self.train(data[:self.step_size], labels[:self.step_size])
 
-            if self.use_recent_data:
-                self.gathered_data.clear()
-                self.gathered_labels.clear()
+            if self.max_data_size and len(self.gathered_data) > self.max_data_size:
+                for i in range(len(self.gathered_data) - self.max_data_size):
+                    del self.gathered_data[0]
+                    del self.gathered_labels[0]
         
         self.controller_state = from_labels(output)
         return self.controller_state
