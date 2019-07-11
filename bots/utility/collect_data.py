@@ -116,13 +116,13 @@ def format_data(index: int, packet: GameTickPacket, prediction: BallPrediction):
     return data
 
 
-def format_labels(controls: SimpleControllerState, wheel_contact: bool):
+def format_labels(controls: SimpleControllerState, car: PlayerInfo):
     labels = np.zeros(shape = label_size) # Blank labels
-    labels[0] = (1 if controls.boost else transform_clamp(controls.throttle, True))
+    labels[0] = (1 if controls.boost and car.boost >= 1 else transform_clamp(controls.throttle, True))
     labels[1] = transform_clamp(controls.steer, True)
-    labels[2] = (transform_clamp(controls.pitch, True) if wheel_contact else 0)
-    labels[3] = (transform_clamp(controls.yaw, True) if wheel_contact else 0)
-    labels[4] = (transform_clamp(controls.roll, True) if wheel_contact else 0)
+    labels[2] = (0 if car.has_wheel_contact else transform_clamp(controls.pitch, True))
+    labels[3] = (0 if car.has_wheel_contact else transform_clamp(controls.yaw, True))
+    labels[4] = (0 if car.has_wheel_contact else transform_clamp(controls.roll, True))
     labels[5] = (1 if controls.jump else 0)
     labels[6] = (1 if controls.boost else 0)
     labels[7] = (1 if controls.handbrake else 0)

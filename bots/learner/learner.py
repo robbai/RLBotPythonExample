@@ -21,10 +21,10 @@ class Learner(BaseAgent):
         self.last_time = 0
 
         # Variables
-        self.epochs = 5
-        self.step_size = 30
+        self.epochs = 1
+        self.step_size = 250
         self.play_on_own = False
-        self.max_data_size = 500
+        self.max_data_size = 1000
 
         # Data and labels
         self.gathered_data = []
@@ -32,8 +32,10 @@ class Learner(BaseAgent):
 
         # Teacher
         try:
-            sys.path.append(r'C:/Users/wood3/Documents/RLBot/Bots/Atba2')
-            from atba2 import Atba2 as Teacher
+            '''sys.path.append(r'C:/Users/wood3/Documents/RLBot/Bots/Atba2')
+            from atba2 import Atba2 as Teacher'''
+            sys.path.append(r'C:\Users\wood3\Documents\RLBot\Bots\rashBot')
+            from Agent import RashBot as Teacher
         except Exception as e:
             print(e)
             from teacher import Teacher
@@ -47,13 +49,13 @@ class Learner(BaseAgent):
         #self.tf = tf
 
         # Network
-        regularisation_rate = 0.001
+        regularisation_rate = 0.0001
         self.model = tf.keras.Sequential([\
-        layers.Dense(data_size, activation = 'tanh', input_shape = (data_size,), kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
-        layers.Dense(data_size, activation = 'tanh', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
-        layers.Dense(label_size, activation = 'linear', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate))])
+        layers.Dense(data_size / 2, activation = 'sigmoid', input_shape = (data_size,), kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
+        layers.Dense(data_size / 2, activation = 'sigmoid', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
+        layers.Dense(label_size, activation = 'sigmoid', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate))])
         self.model.compile(optimizer = tf.train.AdamOptimizer(0.01),\
-                           loss = 'mse')
+                           loss = 'categorical_crossentropy')
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
         car = packet.game_cars[self.index]
@@ -67,13 +69,14 @@ class Learner(BaseAgent):
         if not self.play_on_own:
             self.reset_teacher_functions()
             teacher_output = self.teacher.get_output(packet)
-            labels = format_labels(teacher_output, car.has_wheel_contact)
+            labels = format_labels(teacher_output, car)
 
             self.gathered_data.append(data)
             self.gathered_labels.append(labels)
 
         # Get our own predicted output
         output = self.model.predict(data.reshape((1, data_size)))[0]
+        print(labels.tolist(), output.tolist())
 
         # Train
         if (self.step_size is None or len(self.gathered_data) % self.step_size == 0)\
