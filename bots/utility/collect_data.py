@@ -49,7 +49,7 @@ def format_data(index: int, packet: GameTickPacket, prediction: BallPrediction):
     data = np.zeros(shape = data_size) # Blank data
 
     flip = (packet.game_cars[index].team == 1) 
-    if flip: packet = flip_packet(packet)
+    if flip: flip_packet(packet)
 
     # Ball
     ball: BallData = packet.game_ball

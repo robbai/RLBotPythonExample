@@ -35,11 +35,11 @@ class Learner(BaseAgent):
         try:
             sys.path.append(r'C:/Users/wood3/Documents/RLBot/Bots/Dweller')
             from dweller import Dweller as Teacher
-            '''sys.path.append(r'C:/Users/wood3/Documents/RLBot/Bots/Skybot')
-            from SkyBot import SkyBot as Teacher'''
+            self.teacher_name = 'Dweller'
         except Exception as e:
             print(e)
             from teacher import Teacher
+            self.teacher_name = 'Teacher'
         self.teacher = Teacher(self, self.team, self.index)
         self.reset_teacher_functions(first_time = True)
         self.teacher.initialize_agent()
@@ -84,7 +84,7 @@ class Learner(BaseAgent):
         self.renderer.begin_rendering('Status')
         if len(self.gathered_data) >= self.training_steps\
            and not self.play_on_own:
-            self.renderer.draw_string_2d(10, 10, 2, 2, 'Training', self.renderer.blue())
+            self.renderer.draw_string_2d(10, 10 + 100 * self.index, 2, 2, 'Training', self.renderer.team_color(car.team, True))
             self.renderer.end_rendering()
 
             # Randomise data and labels
@@ -99,9 +99,9 @@ class Learner(BaseAgent):
             self.gathered_data.clear()
             self.gathered_labels.clear()
         else:
-            self.renderer.draw_string_2d(10, 10, 2, 2, 'Playing ('\
+            self.renderer.draw_string_2d(10, 10 * (self.index + 1), 2, 2, 'Playing ('\
                                          + str(int(len(self.gathered_data) / self.training_steps * 100))\
-                                         + '%)', self.renderer.white())
+                                         + '%)', self.renderer.team_color(car.team))
             self.renderer.end_rendering()
 
         # Save model
@@ -118,11 +118,12 @@ class Learner(BaseAgent):
 
     def save(self):
         try:
-            path = str(__file__) + '../models/' + self.teacher.name + '_model.h5'
-            for i in range(20): print(path)
-            self.model.save(path)
+            path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))\
+                                , 'models/' + self.teacher_name + '_model.h5')
+            print('Saving to: ' + str(path).replace('\\', '/'))
+            self.model.save(str(path))
         except Exception as e:
-            for i in range(20): print(e)
+            print(e)
 
     def reset_teacher_functions(self, first_time: bool = False):
         if dummy_render:
