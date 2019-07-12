@@ -116,17 +116,28 @@ def format_data(index: int, packet: GameTickPacket, prediction: BallPrediction):
     return data
 
 
-def format_labels(controls: SimpleControllerState, car: PlayerInfo):
+def format_labels(controls: SimpleControllerState, car: PlayerInfo, remove_noise: bool = False):
     labels = np.zeros(shape = label_size) # Blank labels
-    labels[0] = (1 if controls.boost and car.boost >= 1 else clamp11(controls.throttle))
+
+    if remove_noise:
+        labels[0] = (1 if controls.boost and car.boost >= 1 else clamp11(controls.throttle))
+        air: bool = (not car.has_wheel_contact or controls.jump) 
+        labels[2] = (clamp11(controls.pitch) if air else 0)
+        labels[3] = (clamp11(controls.yaw) if air else 0)
+        labels[4] = (clamp11(controls.roll) if air else 0)
+        labels[6] = (1 if controls.boost and car.boost >= 1 else 0)
+    else:
+        labels[0] = clamp11(controls.throttle)
+        labels[2] = clamp11(controls.pitch)
+        labels[3] = clamp11(controls.yaw)
+        labels[4] = clamp11(controls.roll)
+        labels[6] = (1 if controls.boost else 0)
+    
     labels[1] = clamp11(controls.steer)
-    labels[2] = (0 if car.has_wheel_contact else clamp11(controls.pitch))
-    labels[3] = (0 if car.has_wheel_contact else clamp11(controls.yaw))
-    labels[4] = (0 if car.has_wheel_contact else clamp11(controls.roll))
     labels[5] = (1 if controls.jump else 0)
-    labels[6] = (1 if controls.boost else 0)
     labels[7] = (1 if controls.handbrake else 0)
     labels[8] = (1 if hasattr(controls, 'use_item') and controls.use_item else 0)
+    
     return labels
 
 

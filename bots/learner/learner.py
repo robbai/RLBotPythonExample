@@ -18,13 +18,14 @@ class Learner(BaseAgent):
 
     def initialize_agent(self):
         self.controller_state = SimpleControllerState()
-        self.last_time = 0
+        self.last_save = 0
 
         # Variables
-        self.epochs = 40
-        self.steps_used = 0.35
-        self.training_steps = 200
+        self.epochs = 30
+        self.steps_used = 0.25
+        self.training_steps = 250
         self.play_on_own = False
+        self.save_time = 60
 
         # Data and labels
         self.gathered_data = []
@@ -49,12 +50,12 @@ class Learner(BaseAgent):
         #self.tf = tf
 
         # Network
-        regularisation_rate = 0.0000001
+        regularisation_rate = 0.00000001
         self.model = tf.keras.Sequential([\
         layers.Dense(data_size, activation = 'linear', input_shape = (data_size,), kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
         layers.Dense(data_size, activation = 'linear', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
         layers.Dense(label_size, activation = 'tanh', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate))])
-        self.model.compile(optimizer = tf.train.AdamOptimizer(0.00015),\
+        self.model.compile(optimizer = tf.train.AdamOptimizer(0.0005),\
                            loss = 'mse')
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
@@ -79,31 +80,49 @@ class Learner(BaseAgent):
         #print(labels.tolist(), output.tolist())
 
         # Train
-        print(len(self.gathered_data))
+        #print(len(self.gathered_data))
         self.renderer.begin_rendering('Status')
         if len(self.gathered_data) >= self.training_steps\
            and not self.play_on_own:
             self.renderer.draw_string_2d(10, 10, 2, 2, 'Training', self.renderer.blue())
             self.renderer.end_rendering()
-            
+
+            # Randomise data and labels
             c = list(zip(self.gathered_data, self.gathered_labels))
             shuffle(c)
             data, labels = zip(*c)
 
+            # Begin training
             steps = int(self.training_steps * self.steps_used)
             self.train(data[:steps], labels[:steps])
 
             self.gathered_data.clear()
             self.gathered_labels.clear()
         else:
-            self.renderer.draw_string_2d(10, 10, 2, 2, 'Playing', self.renderer.white())
+            self.renderer.draw_string_2d(10, 10, 2, 2, 'Playing ('\
+                                         + str(int(len(self.gathered_data) / self.training_steps * 100))\
+                                         + '%)', self.renderer.white())
             self.renderer.end_rendering()
+
+        # Save model
+        time = packet.game_info.seconds_elapsed
+        if not self.play_on_own and time - self.last_save > self.save_time:
+            self.last_save = time
+            self.save()
         
         self.controller_state = from_labels(output)
         return self.controller_state
 
     def train(self, data, labels):
         self.model.fit([data], [labels], epochs = self.epochs)
+
+    def save(self):
+        try:
+            path = str(__file__) + '../models/' + self.teacher.name + '_model.h5'
+            for i in range(20): print(path)
+            self.model.save(path)
+        except Exception as e:
+            for i in range(20): print(e)
 
     def reset_teacher_functions(self, first_time: bool = False):
         if dummy_render:
