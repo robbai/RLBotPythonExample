@@ -35,11 +35,10 @@ class Learner(BaseAgent):
         try:
             sys.path.append(r'C:/Users/wood3/Documents/RLBot/Bots/Dweller')
             from dweller import Dweller as Teacher
-            self.teacher_name = 'Dweller'
         except Exception as e:
             print(e)
             from teacher import Teacher
-            self.teacher_name = 'Teacher'
+        self.teacher_name = Teacher.__name__
         self.teacher = Teacher(self, self.team, self.index)
         self.reset_teacher_functions(first_time = True)
         self.teacher.initialize_agent()
