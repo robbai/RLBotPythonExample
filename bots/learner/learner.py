@@ -119,7 +119,7 @@ class Learner(BaseAgent):
         try:
             path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))\
                                 , 'models/' + str(int(self.last_save)) + "_" + self.teacher_name + '_model.h5')
-            print('Saving to: ' + str(path).replace('\\', '/'))
+            print('[' + self.name + '] Saving to: ' + str(path).replace('\\', '/'))
             self.model.save(str(path))
         except Exception as e:
             print(e)
