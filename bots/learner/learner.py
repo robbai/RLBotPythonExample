@@ -23,9 +23,9 @@ class Learner(BaseAgent):
         # Variables
         self.epochs = 30
         self.steps_used = 0.25
-        self.training_steps = 250
+        self.training_steps = 10
         self.play_on_own = False
-        self.save_time = 60
+        self.save_time = 600
 
         # Data and labels
         self.gathered_data = []
@@ -49,16 +49,17 @@ class Learner(BaseAgent):
         #self.tf = tf
 
         # Network
-        regularisation_rate = 0.00000001
+        regularisation_rate = 0.0000001
         self.model = tf.keras.Sequential([\
         layers.Dense(data_size, activation = 'linear', input_shape = (data_size,), kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
         layers.Dense(data_size, activation = 'linear', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
         layers.Dense(label_size, activation = 'tanh', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate))])
-        self.model.compile(optimizer = tf.train.AdamOptimizer(0.0005),\
+        self.model.compile(optimizer = tf.train.AdamOptimizer(0.001),\
                            loss = 'mse')
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
         car = packet.game_cars[self.index]
+        time = packet.game_info.seconds_elapsed
         if not packet.game_info.is_round_active or car.is_demolished:
             return self.controller_state 
         
@@ -76,10 +77,8 @@ class Learner(BaseAgent):
 
         # Get our own predicted output
         output = self.model.predict(data.reshape((1, data_size)))[0]
-        #print(labels.tolist(), output.tolist())
 
         # Train
-        #print(len(self.gathered_data))
         self.renderer.begin_rendering('Status')
         if len(self.gathered_data) >= self.training_steps\
            and not self.play_on_own:
@@ -97,6 +96,8 @@ class Learner(BaseAgent):
 
             self.gathered_data.clear()
             self.gathered_labels.clear()
+
+            self.update_training_params(time)
         else:
             self.renderer.draw_string_2d(10, 10 * (self.index + 1), 2, 2, 'Playing ('\
                                          + str(int(len(self.gathered_data) / self.training_steps * 100))\
@@ -104,7 +105,6 @@ class Learner(BaseAgent):
             self.renderer.end_rendering()
 
         # Save model
-        time = packet.game_info.seconds_elapsed
         if not self.play_on_own and time - self.last_save > self.save_time:
             self.last_save = time
             self.save()
@@ -134,3 +134,7 @@ class Learner(BaseAgent):
             self.teacher.get_field_info = self.get_field_info
             self.teacher.get_ball_prediction_struct = self.get_ball_prediction_struct
             self.teacher.send_quick_chat = self.send_quick_chat
+
+    def update_training_params(self, time: float):
+        self.training_steps = min(750, max(10, int(time)))
+        self.steps_used = max(0.1, 1 / max(1, time / 75))

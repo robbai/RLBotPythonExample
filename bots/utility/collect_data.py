@@ -134,9 +134,9 @@ def format_labels(controls: SimpleControllerState, car: PlayerInfo, remove_noise
         labels[6] = (1 if controls.boost else 0)
     
     labels[1] = clamp11(controls.steer)
-    labels[5] = (1 if controls.jump else 0)
-    labels[7] = (1 if controls.handbrake else 0)
-    labels[8] = (1 if hasattr(controls, 'use_item') and controls.use_item else 0)
+    labels[5] = (1 if controls.jump else -1)
+    labels[7] = (1 if controls.handbrake else -1)
+    labels[8] = (1 if hasattr(controls, 'use_item') and controls.use_item else -1)
     
     return labels
 
