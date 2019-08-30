@@ -146,5 +146,5 @@ class Learner(BaseAgent):
             self.teacher.send_quick_chat = self.send_quick_chat
 
     def update_training_params(self, time: float):
-        self.training_steps = min(750, max(10, int(time)))
-        self.steps_used = max(0.1, 1 / max(1, time / 75))
+        self.training_steps = min(300, max(10, int(time)))
+        self.steps_used = max(0.2, 1 / max(1, time / 150))
