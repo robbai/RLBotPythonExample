@@ -21,6 +21,7 @@ class Learner(BaseAgent):
     def initialize_agent(self):
         self.controller_state = SimpleControllerState()
         self.last_save = 0
+        self.state_set = False
 
         # Variables
         self.epochs = 30
@@ -62,11 +63,14 @@ class Learner(BaseAgent):
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
         car = packet.game_cars[self.index]
         time = packet.game_info.seconds_elapsed
-        
-        if not packet.game_info.is_round_active or car.is_demolished:
+
+        # State-set the game speed
+        if not self.state_set:
             game_state = GameState(console_commands=['Set WorldInfo TimeDilation ' + str(game_speed)])
             self.set_game_state(game_state)
-
+            self.state_set = True
+        
+        if not packet.game_info.is_round_active or car.is_demolished:
             return self.controller_state 
         
         data = format_data(self.index, packet, self.get_ball_prediction_struct())
