@@ -24,9 +24,10 @@ class Learner(BaseAgent):
         self.state_set = False
 
         # Variables
-        self.epochs = 20
-        self.steps_used = 0.25
-        self.training_steps = 10
+        self.epochs = 30
+        self.steps_used = None
+        self.training_steps = None
+        self.update_training_params()
         self.play_on_own = False
         self.save_time = 600
 
@@ -148,6 +149,6 @@ class Learner(BaseAgent):
             self.teacher.get_ball_prediction_struct = self.get_ball_prediction_struct
             self.teacher.send_quick_chat = self.send_quick_chat
 
-    def update_training_params(self, time: float):
-        self.training_steps = min(500, max(5, time // 5))
-        self.steps_used = max(0.15, 1 / max(1, time / 300))
+    def update_training_params(self, time: float = 0):
+        self.training_steps = min(400, max(10, time // 5))
+        self.steps_used = max(0.1, 1 / max(1, time / 250))
