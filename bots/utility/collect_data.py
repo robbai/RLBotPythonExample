@@ -40,7 +40,9 @@ from .orientation import Orientation, relative_location
 from .utility import *
 
 
-data_size = (3 + 3 + 1 + (3 * 3) + (3 + 3 + 3 + 3 + 7) * 2 + 3)
+opponent_data = False
+
+data_size = (3 + 3 + 1 + (3 * 3) + (3 + 3 + 3 + 3 + 7) * (2 if opponent_data else 1) + 3)
 car_data_size = 19
 label_size = 9
 
@@ -78,7 +80,7 @@ def format_data(index: int, packet: GameTickPacket, prediction: BallPrediction):
     
     # Cars
     my_car = packet.game_cars[index]
-    enemy_car = get_enemy_car(index, packet)
+    enemy_car = (get_enemy_car(index, packet) if opponent_data else None)
     for i, car in enumerate([my_car, enemy_car]):
         if not car: continue
         car_position = Vec3(car.physics.location) / pitch_side_uu
@@ -109,33 +111,36 @@ def format_data(index: int, packet: GameTickPacket, prediction: BallPrediction):
         data[34 + i * car_data_size] = ang_vel.z
 
     # Misc
-    data[54] = (1 if packet.game_info.is_kickoff_pause else -1)
-    data[55] = log(max(0.01, packet.game_info.seconds_elapsed - ball.latest_touch.time_seconds))
-    data[56] = (1 if packet.game_info.is_round_active else -1)
+    data[54 - (0 if opponent_data else car_data_size)] = (1 if packet.game_info.is_kickoff_pause else -1)
+    data[55 - (0 if opponent_data else car_data_size)] = log(max(0.01, packet.game_info.seconds_elapsed - ball.latest_touch.time_seconds))
+    data[56 - (0 if opponent_data else car_data_size)] = (1 if packet.game_info.is_round_active else -1)
     
     return data
 
 
-def format_labels(controls: SimpleControllerState, car: PlayerInfo, remove_noise: bool = False):
+def format_labels(controls: SimpleControllerState, car: PlayerInfo, mask: bool = False):
     labels = np.zeros(shape = label_size) # Blank labels
 
-    if remove_noise:
+    if mask:
         labels[0] = (1 if controls.boost and car.boost >= 1 else clamp11(controls.throttle))
-        air: bool = (not car.has_wheel_contact or controls.jump) 
+        air: bool = (not car.has_wheel_contact or (controls.jump and not car.double_jumped))
+        labels[1] = (clamp11(controls.steer) if not air else 0)
         labels[2] = (clamp11(controls.pitch) if air else 0)
         labels[3] = (clamp11(controls.yaw) if air else 0)
         labels[4] = (clamp11(controls.roll) if air else 0)
-        labels[6] = (1 if controls.boost and car.boost >= 1 else 0)
+        labels[5] = (1 if controls.jump and (air or not car.double_jumped) else -1)
+        labels[6] = (1 if controls.boost and car.boost >= 1 else -1)
+        labels[7] = (1 if controls.handbrake and not air else -1)
     else:
         labels[0] = clamp11(controls.throttle)
+        labels[1] = clamp11(controls.steer)
         labels[2] = clamp11(controls.pitch)
         labels[3] = clamp11(controls.yaw)
         labels[4] = clamp11(controls.roll)
-        labels[6] = (1 if controls.boost else 0)
-    
-    labels[1] = clamp11(controls.steer)
-    labels[5] = (1 if controls.jump else -1)
-    labels[7] = (1 if controls.handbrake else -1)
+        labels[5] = (1 if controls.jump else -1)
+        labels[6] = (1 if controls.boost else -1)
+        labels[7] = (1 if controls.handbrake else -1)
+        
     labels[8] = (1 if hasattr(controls, 'use_item') and controls.use_item else -1)
     
     return labels
@@ -148,10 +153,10 @@ def from_labels(labels) -> SimpleControllerState:
     controls.pitch = clamp11(labels[2])
     controls.yaw = clamp11(labels[3])
     controls.roll = clamp11(labels[4])
-    controls.jump = (labels[5] > 0.5)
-    controls.boost = (labels[6] > 0.5)
-    controls.handbrake = (labels[7] > 0.5)
-    controls.use_item = (labels[8] > 0.5)
+    controls.jump = (labels[5] > 0)
+    controls.boost = (labels[6] > 0)
+    controls.handbrake = (labels[7] > 0)
+    controls.use_item = (labels[8] > 0)
     return controls
 
     

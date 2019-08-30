@@ -12,7 +12,7 @@ from utility.collect_data import format_data, format_labels, data_size, label_si
 from utility.dummy_renderer import DummyRenderer
 
 
-game_speed = 3
+game_speed = 1.8
 dummy_render = False
 
 
@@ -24,7 +24,7 @@ class Learner(BaseAgent):
         self.state_set = False
 
         # Variables
-        self.epochs = 30
+        self.epochs = 20
         self.steps_used = None
         self.training_steps = None
         self.update_training_params()
@@ -150,5 +150,5 @@ class Learner(BaseAgent):
             self.teacher.send_quick_chat = self.send_quick_chat
 
     def update_training_params(self, time: float = 0):
-        self.training_steps = min(400, max(10, time // 5))
-        self.steps_used = max(0.1, 1 / max(1, time / 250))
+        self.training_steps = min(600, max(10, time))
+        self.steps_used = max(0.1, 1 / max(1, time / 300))
