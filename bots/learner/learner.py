@@ -65,10 +65,13 @@ class Learner(BaseAgent):
         time = packet.game_info.seconds_elapsed
 
         # State-set the game speed
-        if not self.state_set:
-            game_state = GameState(console_commands=['Set WorldInfo TimeDilation ' + str(game_speed)])
-            self.set_game_state(game_state)
-            self.state_set = True
+        if packet.game_info.is_round_active:
+            if not self.state_set:
+                game_state = GameState(console_commands=['Set WorldInfo TimeDilation ' + str(game_speed)])
+                self.set_game_state(game_state)
+                self.state_set = True
+        else:
+            self.state_set = False
         
         if not packet.game_info.is_round_active or car.is_demolished:
             return self.controller_state 
