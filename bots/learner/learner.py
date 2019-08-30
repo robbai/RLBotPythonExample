@@ -5,12 +5,14 @@ from random import shuffle
 import numpy as np
 from rlbot.agents.base_agent import BaseAgent, SimpleControllerState
 from rlbot.utils.structures.game_data_struct import GameTickPacket
+from rlbot.utils.game_state_util import GameState
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utility.collect_data import format_data, format_labels, data_size, label_size, from_labels
 from utility.dummy_renderer import DummyRenderer
 
 
+game_speed = 3
 dummy_render = False
 
 
@@ -60,7 +62,11 @@ class Learner(BaseAgent):
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
         car = packet.game_cars[self.index]
         time = packet.game_info.seconds_elapsed
+        
         if not packet.game_info.is_round_active or car.is_demolished:
+            game_state = GameState(console_commands=['Set WorldInfo TimeDilation ' + str(game_speed)])
+            self.set_game_state(game_state)
+
             return self.controller_state 
         
         data = format_data(self.index, packet, self.get_ball_prediction_struct())
