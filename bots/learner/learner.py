@@ -24,7 +24,7 @@ class Learner(BaseAgent):
         self.state_set = False
 
         # Variables
-        self.epochs = 30
+        self.epochs = 20
         self.steps_used = 0.25
         self.training_steps = 10
         self.play_on_own = False
@@ -149,5 +149,5 @@ class Learner(BaseAgent):
             self.teacher.send_quick_chat = self.send_quick_chat
 
     def update_training_params(self, time: float):
-        self.training_steps = min(300, max(10, int(time)))
-        self.steps_used = max(0.2, 1 / max(1, time / 150))
+        self.training_steps = min(500, max(5, time // 5))
+        self.steps_used = max(0.15, 1 / max(1, time / 300))
