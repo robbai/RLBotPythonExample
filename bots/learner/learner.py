@@ -28,7 +28,6 @@ class Learner(BaseAgent):
         self.steps_used = None
         self.training_steps = None
         self.update_training_params()
-        self.play_on_own = False
         self.save_time = 600
 
         # Data and labels
@@ -54,12 +53,13 @@ class Learner(BaseAgent):
 
         # Network
         regularisation_rate = 0.0000001
-        self.model = tf.keras.Sequential([\
-        layers.Dense(data_size, activation = 'linear', input_shape = (data_size,), kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
-        layers.Dense(data_size, activation = 'linear', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
-        layers.Dense(label_size, activation = 'tanh', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate))])
-        self.model.compile(optimizer = tf.train.AdamOptimizer(0.001),\
-                           loss = 'mae')
+        inputs = layers.Input(shape = (data_size,))
+        x = layers.Dense(data_size, activation = 'linear', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate))(inputs)
+        x = layers.Dense(data_size, activation = 'linear', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate))(x)
+        output_one = layers.Dense(label_size[0], activation = 'tanh', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate))(x)
+        output_two = layers.Dense(label_size[1], activation = 'tanh', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate))(x)
+        self.model = tf.keras.Model(inputs = inputs, outputs = [output_one, output_two])
+        self.model.compile(optimizer = tf.compat.v1.train.AdamOptimizer(0.001), loss = ['mse', 'mae'])
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
         car = packet.game_cars[self.index]
@@ -81,21 +81,18 @@ class Learner(BaseAgent):
         labels = None
 
         # Get the labels
-        if not self.play_on_own:
-            self.reset_teacher_functions()
-            teacher_output = self.teacher.get_output(packet)
-            labels = format_labels(teacher_output, car)
-
-            self.gathered_data.append(data)
-            self.gathered_labels.append(labels)
+        self.reset_teacher_functions()
+        teacher_output = self.teacher.get_output(packet)
+        labels = format_labels(teacher_output, car)
+        self.gathered_data.append(data)
+        self.gathered_labels.append(labels)
 
         # Get our own predicted output
-        output = self.model.predict(data.reshape((1, data_size)))[0]
+        output = self.model.predict(data.reshape((1, data_size)))
 
         # Train
         self.renderer.begin_rendering('Status')
-        if len(self.gathered_data) >= self.training_steps\
-           and not self.play_on_own:
+        if len(self.gathered_data) >= self.training_steps:
             self.renderer.draw_string_2d(10, 10 + 100 * self.index, 2, 2, 'Training', self.renderer.team_color(car.team, True))
             self.renderer.end_rendering()
 
@@ -106,7 +103,9 @@ class Learner(BaseAgent):
 
             # Begin training
             steps = int(self.training_steps * self.steps_used)
-            self.train(data[:steps], labels[:steps])
+            #self.train(data[:steps], labels[:steps])
+            labels_to_use = [[x[0] for x in labels[:steps]], [x[1] for x in labels[:steps]]]
+            self.train([data[:steps]], labels_to_use)
 
             self.gathered_data.clear()
             self.gathered_labels.clear()
@@ -119,15 +118,15 @@ class Learner(BaseAgent):
             self.renderer.end_rendering()
 
         # Save model
-        if not self.play_on_own and time - self.last_save > self.save_time:
+        if time - self.last_save > self.save_time:
             self.last_save = time
             self.save()
-        
+
         self.controller_state = from_labels(output)
         return self.controller_state
 
     def train(self, data, labels):
-        self.model.fit([data], [labels], epochs = self.epochs)
+        self.model.fit(data, labels, epochs = self.epochs)
 
     def save(self):
         try:

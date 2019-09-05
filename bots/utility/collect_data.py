@@ -44,7 +44,7 @@ opponent_data = False
 
 data_size = (3 + 3 + 1 + (3 * 3) + (3 + 3 + 3 + 3 + 7) * (2 if opponent_data else 1) + 3)
 car_data_size = 19
-label_size = 9
+label_size = (5, 3)
 
 
 def format_data(index: int, packet: GameTickPacket, prediction: BallPrediction):
@@ -119,44 +119,43 @@ def format_data(index: int, packet: GameTickPacket, prediction: BallPrediction):
 
 
 def format_labels(controls: SimpleControllerState, car: PlayerInfo, mask: bool = False):
-    labels = np.zeros(shape = label_size) # Blank labels
+    labels = np.array([np.zeros(label_size[0]), np.zeros(label_size[1])]) # Blank labels
 
     if mask:
-        labels[0] = (1 if controls.boost and car.boost >= 1 else clamp11(controls.throttle))
+        labels[0][0] = (1 if controls.boost and car.boost >= 1 else clamp11(controls.throttle))
         air: bool = (not car.has_wheel_contact or (controls.jump and not car.double_jumped))
-        labels[1] = (clamp11(controls.steer) if not air else 0)
-        labels[2] = (clamp11(controls.pitch) if air else 0)
-        labels[3] = (clamp11(controls.yaw) if air else 0)
-        labels[4] = (clamp11(controls.roll) if air else 0)
-        labels[5] = (1 if controls.jump and (air or not car.double_jumped) else -1)
-        labels[6] = (1 if controls.boost and car.boost >= 1 else -1)
-        labels[7] = (1 if controls.handbrake and not air else -1)
+        labels[0][1] = (clamp11(controls.steer) if not air else 0)
+        labels[0][2] = (clamp11(controls.pitch) if air else 0)
+        labels[0][3] = (clamp11(controls.yaw) if air else 0)
+        labels[0][4] = (clamp11(controls.roll) if air else 0)
+        labels[1][0] = (1 if controls.jump and (air or not car.double_jumped) else -1)
+        labels[1][1] = (1 if controls.boost and car.boost >= 1 else -1)
+        labels[1][2] = (1 if controls.handbrake and not air else -1)
     else:
-        labels[0] = clamp11(controls.throttle)
-        labels[1] = clamp11(controls.steer)
-        labels[2] = clamp11(controls.pitch)
-        labels[3] = clamp11(controls.yaw)
-        labels[4] = clamp11(controls.roll)
-        labels[5] = (1 if controls.jump else -1)
-        labels[6] = (1 if controls.boost else -1)
-        labels[7] = (1 if controls.handbrake else -1)
-        
-    labels[8] = (1 if hasattr(controls, 'use_item') and controls.use_item else -1)
+        labels[0][0] = clamp11(controls.throttle)
+        labels[0][1] = clamp11(controls.steer)
+        labels[0][2] = clamp11(controls.pitch)
+        labels[0][3] = clamp11(controls.yaw)
+        labels[0][4] = clamp11(controls.roll)
+        labels[1][0] = (1 if controls.jump else -1)
+        labels[1][1] = (1 if controls.boost else -1)
+        labels[1][2] = (1 if controls.handbrake else -1)
     
     return labels
 
 
 def from_labels(labels) -> SimpleControllerState:
     controls = SimpleControllerState()
-    controls.throttle = clamp11(labels[0])
-    controls.steer = clamp11(labels[1])
-    controls.pitch = clamp11(labels[2])
-    controls.yaw = clamp11(labels[3])
-    controls.roll = clamp11(labels[4])
-    controls.jump = (labels[5] > 0)
-    controls.boost = (labels[6] > 0)
-    controls.handbrake = (labels[7] > 0)
-    controls.use_item = (labels[8] > 0)
+    labels = (labels[0][0], labels[1][0])
+    controls.throttle = clamp11(labels[0][0])
+    controls.steer = clamp11(labels[0][1])
+    controls.pitch = clamp11(labels[0][2])
+    controls.yaw = clamp11(labels[0][3])
+    controls.roll = clamp11(labels[0][4])
+    controls.jump = (labels[1][0] > 0)
+    controls.boost = (labels[1][1] > 0)
+    controls.handbrake = (labels[1][2] > 0)
+    controls.use_item = False
     return controls
 
     
