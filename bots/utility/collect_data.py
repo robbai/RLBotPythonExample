@@ -4,14 +4,12 @@ ball: (X, Y, Z) / pitch width
 ball velocity normalised: X, Y, Z
 ball velocity magnitude / pitch width
 
-BALL PREDICTION:
-ball prediction displacement: (X, Y, Z) / pitch width, each second for 3 seconds
-
 CARS:
 our car: (X, Y, Z) / pitch width
 our car nose: X, Y, Z
 local angular velocity: X, Y, Z
 local ball normalised: X, Y, Z
+local ball prediction normalised (each half second for 3 seconds): X, Y, Z
 our ball distance / pitch width
 our car boost / 100
 car velocity magnitude / pitch width
@@ -42,8 +40,8 @@ from .utility import *
 
 opponent_data = False
 
-data_size = (3 + 3 + 1 + (3 * 3) + (3 + 3 + 3 + 3 + 7) * (2 if opponent_data else 1) + 3)
-car_data_size = 19
+data_size = (3 + 3 + 1 + (3 * 3) + (3 + 3 + 3 + 3 + 18 + 7) * (2 if opponent_data else 1) + 3)
+car_data_size = 37
 label_size = (5, 3)
 
 
@@ -69,14 +67,7 @@ def format_data(index: int, packet: GameTickPacket, prediction: BallPrediction):
 
     # Ball prediction
     ball_position = Vec3(ball.physics.location) # Rescale
-    for i in range(3):
-        frame = (i + 1) * 60
-        predicted_location = Vec3(prediction.slices[frame].physics.location)
-        if flip: predicted_location = Vec3(-predicted_location.x, -predicted_location.y, predicted_location.z)
-        displacement = (predicted_location - ball_position) / pitch_side_uu
-        data[7 + i * 3] = displacement.x
-        data[8 + i * 3] = displacement.y
-        data[9 + i * 3] = displacement.z
+    
     
     # Cars
     my_car = packet.game_cars[index]
@@ -97,23 +88,31 @@ def format_data(index: int, packet: GameTickPacket, prediction: BallPrediction):
         data[22 + i * car_data_size] = local.x
         data[23 + i * car_data_size] = local.y
         data[24 + i * car_data_size] = local.z
-        data[25 + i * car_data_size] = car_position.dist(ball_position) / pitch_side_uu
-        data[26 + i * car_data_size] = car.boost / 100
+        for j in range(6):
+            frame = (j + 1) * 30
+            predicted_location = Vec3(prediction.slices[frame].physics.location)
+            if flip: predicted_location = Vec3(-predicted_location.x, -predicted_location.y, predicted_location.z)
+            local = relative_location(car_position, car_orientation, predicted_location).normalised()
+            data[25 + i * car_data_size + j * 3] = local.x
+            data[26 + i * car_data_size + j * 3] = local.y
+            data[27 + i * car_data_size + j * 3] = local.z
+        data[43 + i * car_data_size] = car_position.dist(ball_position) / pitch_side_uu
+        data[44 + i * car_data_size] = car.boost / 100
         car_velocity_magnitude = Vec3(car.physics.velocity).length()
-        data[27 + i * car_data_size] = car_velocity_magnitude / pitch_side_uu
-        data[28 + i * car_data_size] = car_direction.dot(car.physics.velocity) / max(0.01, car_velocity_magnitude)
-        data[29 + i * car_data_size] = (1 if car.is_super_sonic else -1)
-        data[30 + i * car_data_size] = (1 if car.has_wheel_contact else -1)
-        data[31 + i * car_data_size] = (1 if not car.double_jumped else -1)
+        data[45 + i * car_data_size] = car_velocity_magnitude / pitch_side_uu
+        data[46 + i * car_data_size] = car_direction.dot(Vec3(car.physics.velocity).normalised())
+        data[47 + i * car_data_size] = (1 if car.is_super_sonic else -1)
+        data[48 + i * car_data_size] = (1 if car.has_wheel_contact else -1)
+        data[49 + i * car_data_size] = (1 if not car.double_jumped else -1)
         ang_vel = relative_location(Vec3(0, 0, 0), car_orientation, Vec3(car.physics.angular_velocity))
-        data[32 + i * car_data_size] = ang_vel.x
-        data[33 + i * car_data_size] = ang_vel.y
-        data[34 + i * car_data_size] = ang_vel.z
+        data[50 + i * car_data_size] = ang_vel.x
+        data[51 + i * car_data_size] = ang_vel.y
+        data[52 + i * car_data_size] = ang_vel.z
 
     # Misc
-    data[54 - (0 if opponent_data else car_data_size)] = (1 if packet.game_info.is_kickoff_pause else -1)
-    data[55 - (0 if opponent_data else car_data_size)] = log(max(0.01, packet.game_info.seconds_elapsed - ball.latest_touch.time_seconds))
-    data[56 - (0 if opponent_data else car_data_size)] = (1 if packet.game_info.is_round_active else -1)
+    data[53 + (0 if not opponent_data else car_data_size)] = (1 if packet.game_info.is_kickoff_pause else -1)
+    data[54 + (0 if not opponent_data else car_data_size)] = log(max(0.01, packet.game_info.seconds_elapsed - ball.latest_touch.time_seconds))
+    data[55 + (0 if not opponent_data else car_data_size)] = (1 if packet.game_info.is_round_active else -1)
     
     return data
 
