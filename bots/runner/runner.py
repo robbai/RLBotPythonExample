@@ -21,7 +21,7 @@ class Runner(BaseAgent):
         from tensorflow.keras import layers
 
         # Network
-        model_name = '25230_Dweller_MAE.h5'
+        model_name = '7204_Dweller_model.h5'
         self.model = tf.keras.models.load_model(model_path + model_name)
         print('[' + self.name + '] Loaded model: ' + str(model_path + model_name).replace('\\', '/'))
 
@@ -33,7 +33,7 @@ class Runner(BaseAgent):
         data = format_data(self.index, packet, self.get_ball_prediction_struct())
 
         # Get our own predicted output
-        output = self.model.predict(data.reshape((1, data_size)))[0]        
+        output = self.model.predict(data.reshape((1, data_size)))
         
         self.controller_state = from_labels(output)
         return self.controller_state
