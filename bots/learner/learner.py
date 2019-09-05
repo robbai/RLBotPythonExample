@@ -12,7 +12,7 @@ from utility.collect_data import format_data, format_labels, data_size, label_si
 from utility.dummy_renderer import DummyRenderer
 
 
-game_speed = 1.8
+game_speed = 1.5
 dummy_render = False
 
 
@@ -59,7 +59,7 @@ class Learner(BaseAgent):
         layers.Dense(data_size, activation = 'linear', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate)),\
         layers.Dense(label_size, activation = 'tanh', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate))])
         self.model.compile(optimizer = tf.train.AdamOptimizer(0.001),\
-                           loss = 'mse')
+                           loss = 'mae')
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
         car = packet.game_cars[self.index]

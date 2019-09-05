@@ -21,7 +21,7 @@ class Runner(BaseAgent):
         from tensorflow.keras import layers
 
         # Network
-        model_name = '3602_Dweller_model.h5'
+        model_name = '25230_Dweller_MAE.h5'
         self.model = tf.keras.models.load_model(model_path + model_name)
         print('[' + self.name + '] Loaded model: ' + str(model_path + model_name).replace('\\', '/'))
 
