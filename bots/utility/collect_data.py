@@ -21,7 +21,6 @@ repeat all our car info for closest opponent to ball
 
 MISC:
 is kickoff
-time since last touch, 10th log
 is round active
 '''
 
@@ -40,7 +39,7 @@ from .utility import *
 
 opponent_data = False
 
-data_size = (3 + 3 + 1 + (3 * 3) + (3 + 3 + 3 + 3 + 18 + 7) * (2 if opponent_data else 1) + 3)
+data_size = (3 + 3 + 1 + (3 * 3) + (3 + 3 + 3 + 3 + 18 + 7) * (2 if opponent_data else 1) + 2)
 car_data_size = 37
 label_size = (5, 3)
 
@@ -111,8 +110,7 @@ def format_data(index: int, packet: GameTickPacket, prediction: BallPrediction):
 
     # Misc
     data[53 + (0 if not opponent_data else car_data_size)] = (1 if packet.game_info.is_kickoff_pause else -1)
-    data[54 + (0 if not opponent_data else car_data_size)] = log(max(0.01, packet.game_info.seconds_elapsed - ball.latest_touch.time_seconds))
-    data[55 + (0 if not opponent_data else car_data_size)] = (1 if packet.game_info.is_round_active else -1)
+    data[54 + (0 if not opponent_data else car_data_size)] = (1 if packet.game_info.is_round_active else -1)
     
     return data
 
