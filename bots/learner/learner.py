@@ -24,7 +24,7 @@ class Learner(BaseAgent):
         self.state_set = False
 
         # Variables
-        self.epochs = 20
+        self.epochs = 25
         self.steps_used = None
         self.training_steps = None
         self.update_training_params()
@@ -52,14 +52,14 @@ class Learner(BaseAgent):
         #self.tf = tf
 
         # Network
-        regularisation_rate = 0.0000001
+        regularisation_rate = 0.0000005
         inputs = layers.Input(shape = (data_size,))
         x = layers.Dense(data_size, activation = 'linear', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate))(inputs)
         x = layers.Dense(data_size, activation = 'linear', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate))(x)
         output_one = layers.Dense(label_size[0], activation = 'tanh', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate))(x)
         output_two = layers.Dense(label_size[1], activation = 'tanh', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate))(x)
         self.model = tf.keras.Model(inputs = inputs, outputs = [output_one, output_two])
-        self.model.compile(optimizer = tf.compat.v1.train.AdamOptimizer(0.001), loss = ['mse', 'mae'])
+        self.model.compile(optimizer = tf.compat.v1.train.AdamOptimizer(0.0005), loss = ['mse', 'mae'])
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
         car = packet.game_cars[self.index]
@@ -126,7 +126,10 @@ class Learner(BaseAgent):
         return self.controller_state
 
     def train(self, data, labels):
-        self.model.fit(data, labels, epochs = self.epochs)
+        for i in range(2):
+            game_state = GameState(console_commands=['Pause'])
+            self.set_game_state(game_state)
+            if i == 0: self.model.fit(data, labels, epochs = self.epochs)
 
     def save(self):
         try:
