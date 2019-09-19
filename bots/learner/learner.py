@@ -59,7 +59,7 @@ class Learner(BaseAgent):
         output_one = layers.Dense(label_size[0], activation = 'tanh', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate))(x)
         output_two = layers.Dense(label_size[1], activation = 'tanh', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate))(x)
         self.model = tf.keras.Model(inputs = inputs, outputs = [output_one, output_two])
-        self.model.compile(optimizer = tf.compat.v1.train.AdamOptimizer(0.0001), loss = ['mse', max_loss])
+        self.model.compile(optimizer = tf.compat.v1.train.AdamOptimizer(0.0005), loss = ['mse', max_loss])
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
         car = packet.game_cars[self.index]
