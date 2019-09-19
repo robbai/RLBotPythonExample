@@ -12,7 +12,7 @@ from utility.collect_data import format_data, format_labels, data_size, label_si
 from utility.dummy_renderer import DummyRenderer
 
 
-game_speed = 1.5
+game_speed = 1.6
 dummy_render = False
 
 
@@ -59,7 +59,7 @@ class Learner(BaseAgent):
         output_one = layers.Dense(label_size[0], activation = 'tanh', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate))(x)
         output_two = layers.Dense(label_size[1], activation = 'tanh', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate))(x)
         self.model = tf.keras.Model(inputs = inputs, outputs = [output_one, output_two])
-        self.model.compile(optimizer = tf.compat.v1.train.AdamOptimizer(0.0001), loss = ['mse', 'mae'])
+        self.model.compile(optimizer = tf.compat.v1.train.AdamOptimizer(0.0001), loss = ['mse', max_loss])
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
         car = packet.game_cars[self.index]
@@ -152,5 +152,18 @@ class Learner(BaseAgent):
             self.teacher.send_quick_chat = self.send_quick_chat
 
     def update_training_params(self, time: float = 0):
-        self.training_steps = min(600, max(10, time // 2))
-        self.steps_used = max(0.15, 1 / max(1, time / 500))
+        self.training_steps = min(1000, max(10, time // 2))
+        #self.steps_used = max(0.3, 1 / max(1, time / 1000))
+        #self.training_steps = 500
+        self.steps_used = 1
+
+
+def max_loss(predicted_y, desired_y):
+    import tensorflow as tf
+    return tf.reduce_max(tf.abs(predicted_y - desired_y), reduction_indices = [-1])
+
+
+def cubic_activation(inputs):
+    import tensorflow as tf
+    linearness = 1 / 2.5
+    return tf.add(inputs * linearness, tf.pow(inputs, 3)) / (1 + linearness)
