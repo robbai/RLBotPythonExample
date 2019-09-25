@@ -58,8 +58,10 @@ class Learner(BaseAgent):
         x = layers.Dense(data_size, activation = 'linear', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate))(x)
         output_one = layers.Dense(label_size[0], activation = 'tanh', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate))(x)
         output_two = layers.Dense(label_size[1], activation = 'tanh', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate))(x)
-        self.model = tf.keras.Model(inputs = inputs, outputs = [output_one, output_two])
-        self.model.compile(optimizer = tf.compat.v1.train.AdamOptimizer(0.0005), loss = ['mse', max_loss])
+        output_three = layers.Dense(label_size[2], activation = 'tanh', kernel_regularizer = tf.keras.regularizers.l2(l = regularisation_rate))(x)
+        self.model = tf.keras.Model(inputs = inputs, outputs = [output_one, output_two, output_three])
+        jump_weight = 6
+        self.model.compile(optimizer = tf.compat.v1.train.AdamOptimizer(0.0005), loss = ['mse', 'mae', max_loss], loss_weights=[1, 1, jump_weight])
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
         car = packet.game_cars[self.index]
@@ -103,8 +105,7 @@ class Learner(BaseAgent):
 
             # Begin training
             steps = int(self.training_steps * self.steps_used)
-            #self.train(data[:steps], labels[:steps])
-            labels_to_use = [[x[0] for x in labels[:steps]], [x[1] for x in labels[:steps]]]
+            labels_to_use = [[x[0] for x in labels[:steps]], [x[1] for x in labels[:steps]], [x[2] for x in labels[:steps]]]
             self.train([data[:steps]], labels_to_use)
 
             self.gathered_data.clear()
@@ -152,7 +153,7 @@ class Learner(BaseAgent):
             self.teacher.send_quick_chat = self.send_quick_chat
 
     def update_training_params(self, time: float = 0):
-        self.training_steps = min(1000, max(10, time // 2))
+        self.training_steps = min(1000, max(100, time // 3))
         #self.steps_used = max(0.3, 1 / max(1, time / 1000))
         #self.training_steps = 500
         self.steps_used = 1
